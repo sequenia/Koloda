@@ -51,6 +51,11 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     public var rotationMax = defaultRotationMax
     public var rotationAngle = defaultRotationAngle
     public var scaleMin = defaultScaleMin
+
+    public var cardAlpha: CGFloat {
+        get { self.contentView?.transparentizableView.alpha ?? 1 }
+        set { self.contentView?.transparentizableView.alpha = newValue }
+    }
     
     weak var delegate: DraggableCardDelegate? {
         didSet {
@@ -61,7 +66,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     internal var dragBegin = false
     
     private var overlayView: OverlayView?
-    public private(set) var contentView: UIView?
+    public private(set) var contentView: CardView?
     
     private var panGestureRecognizer: UIPanGestureRecognizer!
     private var tapGestureRecognizer: UITapGestureRecognizer!
@@ -111,7 +116,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     }
     
     //MARK: Configurations
-    func configure(_ view: UIView, overlayView: OverlayView?) {
+    func configure(_ view: CardView, overlayView: OverlayView?) {
         self.overlayView?.removeFromSuperview()
         self.contentView?.removeFromSuperview()
         

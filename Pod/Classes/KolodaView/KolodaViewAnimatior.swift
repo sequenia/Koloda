@@ -92,7 +92,7 @@ open class KolodaViewAnimator {
         alphaAnimation?.completionBlock = { _, finished in
             completion?(finished)
         }
-        card.pop_add(alphaAnimation, forKey: "alpha")
+        card.contentView?.transparentizableView.pop_add(alphaAnimation, forKey: "alpha")
     }
     
     open func applyInsertionAnimation(_ cards: [DraggableCardView], completion: AnimationCompletionBlock = nil) {
