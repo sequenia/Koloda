@@ -720,7 +720,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
         guard force || shouldSwipe else { return }
         
         let validDirection = delegate?.koloda(self, allowedDirectionsForIndex: currentCardIndex).contains(direction) ?? true
-        guard validDirection else { return }
+        guard force || validDirection else { return }
         
         if !animationSemaphore.isAnimating {
             if let frontCard = visibleCards.first, !frontCard.dragBegin {
