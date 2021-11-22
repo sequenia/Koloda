@@ -42,14 +42,21 @@ open class KolodaViewAnimator {
         koloda?.layer.pop_add(kolodaAppearScaleAnimation, forKey: "kolodaAppearAlphaAnimation")
     }
     
-    open func applyReverseAnimation(_ card: DraggableCardView, direction: SwipeResultDirection?, duration: TimeInterval, completion: AnimationCompletionBlock = nil) {
+    open func applyReverseAnimation(_ card: DraggableCardView, direction: SwipeResultDirection?, duration: TimeInterval, alphaMode: AlphaMode, completion: AnimationCompletionBlock = nil) {
+        switch alphaMode {
+        case .fixed(let opaque, _, _):
+            card.cardAlpha = opaque
+
+        case .progressive(let start, _, _):
+            card.cardAlpha = start
+        }
+        
         let alphaAnimation = POPBasicAnimation(propertyNamed: kPOPViewAlpha)
         alphaAnimation?.fromValue =  NSNumber(value: 0.0)
         alphaAnimation?.toValue = NSNumber(value: 1.0)
         alphaAnimation?.duration = direction != nil ? duration : 1.0
         alphaAnimation?.completionBlock = { _, finished in
             completion?(finished)
-            card.alpha = 1.0
         }
         card.pop_add(alphaAnimation, forKey: "reverseCardAlphaAnimation")
         
