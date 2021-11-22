@@ -92,6 +92,7 @@ public protocol KolodaViewDelegate: AnyObject {
     func kolodaShouldApplyAppearAnimation(_ koloda: KolodaView) -> Bool
     func kolodaShouldMoveBackgroundCard(_ koloda: KolodaView) -> Bool
     func kolodaShouldTransparentizeNextCard(_ koloda: KolodaView) -> Bool
+    func kolodaShouldWaitCartAnimationFinish(_ koloda: KolodaView) -> Bool
     func koloda(_ koloda: KolodaView, draggedCardWithPercentage finishPercentage: CGFloat, in direction: SwipeResultDirection)
     func kolodaDidResetCard(_ koloda: KolodaView)
     func kolodaSwipeThresholdRatioMargin(_ koloda: KolodaView) -> CGFloat?
@@ -113,6 +114,7 @@ public extension KolodaViewDelegate {
     func kolodaShouldApplyAppearAnimation(_ koloda: KolodaView) -> Bool { return true }
     func kolodaShouldMoveBackgroundCard(_ koloda: KolodaView) -> Bool { return true }
     func kolodaShouldTransparentizeNextCard(_ koloda: KolodaView) -> Bool { return true }
+    func kolodaShouldWaitCartAnimationFinish(_ koloda: KolodaView) -> Bool { return true }
     func koloda(_ koloda: KolodaView, draggedCardWithPercentage finishPercentage: CGFloat, in direction: SwipeResultDirection) {}
     func kolodaDidResetCard(_ koloda: KolodaView) {}
     func kolodaSwipeThresholdRatioMargin(_ koloda: KolodaView) -> CGFloat? { return nil }
@@ -581,9 +583,13 @@ open class KolodaView: UIView, DraggableCardDelegate {
     }
     
     public func revertAction(direction: SwipeResultDirection? = nil) {
-        guard currentCardIndex > 0 && !animationSemaphore.isAnimating else {
+        let shouldWait = delegate?.kolodaShouldWaitCartAnimationFinish(self) ?? true
+
+        guard currentCardIndex > 0,
+              (!animationSemaphore.isAnimating || !shouldWait) else {
             return
         }
+
         if countOfCards - currentCardIndex >= countOfVisibleCards {
             if let lastCard = visibleCards.last {
                 lastCard.removeFromSuperview()
@@ -599,8 +605,8 @@ open class KolodaView: UIView, DraggableCardDelegate {
                 switch self.alphaMode {
                 case .fixed(_, _, let transparent):
                     firstCardView.cardAlpha = transparent
-                case .progressive(let start, _, _):
-                    firstCardView.cardAlpha = fabs(1 - start)
+                case .progressive:
+                    firstCardView.cardAlpha = self.alphaMode.alpha(forIndex: currentCardIndex)
                 }
             }
             firstCardView.delegate = self
@@ -609,9 +615,21 @@ open class KolodaView: UIView, DraggableCardDelegate {
             visibleCards.insert(firstCardView, at: 0)
             
             animationSemaphore.increment()
-            animator.applyReverseAnimation(firstCardView, direction: direction, duration: reverseAnimationDuration, completion: { [weak self] _ in
+            animator.applyReverseAnimation(firstCardView, direction: direction, duration: reverseAnimationDuration, alphaMode: self.alphaMode, completion: { [weak self] _ in
                 guard let _self = self else {
                     return
+                }
+
+                if _self.shouldTransparentizeNextCard {
+                    switch _self.alphaMode {
+                    case .fixed(let opaque, let semiTransparent, _):
+                        break
+
+                    case .progressive(let start, _, _):
+                        for (index, card) in _self.visibleCards.enumerated() {
+                            card.cardAlpha = _self.alphaMode.alpha(forIndex: index)
+                        }
+                    }
                 }
                 
                 _self.animationSemaphore.decrement()
@@ -721,8 +739,10 @@ open class KolodaView: UIView, DraggableCardDelegate {
         
         let validDirection = delegate?.koloda(self, allowedDirectionsForIndex: currentCardIndex).contains(direction) ?? true
         guard force || validDirection else { return }
-        
-        if !animationSemaphore.isAnimating {
+
+        let shouldWait = delegate?.kolodaShouldWaitCartAnimationFinish(self) ?? true
+
+        if !animationSemaphore.isAnimating || !shouldWait {
             if let frontCard = visibleCards.first, !frontCard.dragBegin {
                 
                 if visibleCards.count > 1 {
