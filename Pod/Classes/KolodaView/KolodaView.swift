@@ -733,7 +733,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
         }
     }
     
-    public func swipe(_ direction: SwipeResultDirection, force: Bool = false) {
+    public func swipe(_ direction: SwipeResultDirection, force: Bool = false, overlayShowDuration: DragSpeed?) {
         let shouldSwipe = delegate?.koloda(self, shouldSwipeCardAt: currentCardIndex, in: direction) ?? true
         guard force || shouldSwipe else { return }
         
@@ -758,7 +758,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
                 
                 animationSemaphore.increment()
                 
-                frontCard.swipe(direction) {
+                frontCard.swipe(direction, overlayShowDuration: overlayShowDuration) {
                     self.animationSemaphore.decrement()
                 }
                 frontCard.delegate = nil

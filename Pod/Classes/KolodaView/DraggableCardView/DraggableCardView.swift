@@ -438,7 +438,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         layer.pop_removeAllAnimations()
     }
     
-    func swipe(_ direction: SwipeResultDirection, completionHandler: @escaping () -> Void) {
+    func swipe(_ direction: SwipeResultDirection, overlayShowDuration: DragSpeed? = nil, completionHandler: @escaping () -> Void) {
         if !dragBegin {
             delegate?.card(self, wasSwipedIn: direction)
             
@@ -464,7 +464,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
             overlayView?.overlayState = direction
             let overlayAlphaAnimation = POPBasicAnimation(propertyNamed: kPOPViewAlpha)
             overlayAlphaAnimation?.toValue = 1.0
-            overlayAlphaAnimation?.duration = cardSwipeActionAnimationDuration
+            overlayAlphaAnimation?.duration = overlayShowDuration?.rawValue ?? cardSwipeActionAnimationDuration
             overlayView?.pop_add(overlayAlphaAnimation, forKey: "swipeOverlayAnimation")
         }
     }
